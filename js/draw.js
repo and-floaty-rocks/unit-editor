@@ -26,10 +26,12 @@ function Controls() {
     this.drawCircle = function() { 
         console.log("kek")
         var circle = new Path.Circle(new Point(this.centerX, this.centerY), this.radius);
-        circle.strokeColor = "black"
         circle.type = "circle";
         applyStyle(circle);
         addPath(circle);
+
+        console.log(circle)
+        console.log(circle.getLength());
     };
 
 
@@ -47,9 +49,37 @@ function Controls() {
             paths.push(item);
             view.draw();
         }
-    }
-}
+    };
+    this.save = function() {
+        var string = '{ "amount": ' + paths.length + ', "paths": [';
 
+        for(var i = 0, l = paths.length; i < l; i++) {
+            var p = paths[i];
+            console.log(p);
+            string += '{'+
+            ' "type": "'+p.type+'", '+                         //string
+            '"closed": '+p.closed+', '+                       //boolean
+            '"miterLimit": '+p.miterLimit+', '+               //number
+            '"strokeWidth": '+p.strokeWidth+', '+             //number
+            '"strokeCap": "'+p.strokeCap+'", '+               //string
+            '"strokeJoin": "'+p.strokeJoin+'", '+             //string
+            '"strokeColor": "'+p.strokeColor+'"';             //bad string
+            //end of generic
+
+            switch(p.type) {
+                case "freedrawn": string += stringFreedrawn(p); break;
+            }
+
+            string += '}, ';
+        };
+
+        string = string.slice(0,-2); //remove end comma
+        string += '] }';
+        console.log(string);
+        var kek = JSON.parse(string);
+    };
+}
+//{"amount": 1, "paths": [{"type": "freedrawn", "closed": false, "miterLimit": 10, "strokeWidth": 17, "strokeCap": "round", "strokeJoin": "round", "strokeColor": "{ red: 1, green: 0, blue: 0, alpha: 1 }"}] }
 function applyStyle(item) {
     item.strokeWidth = controls.strokeWidth;
     item.strokeColor = controls.strokeColor;
@@ -72,21 +102,22 @@ function makeDatGUI() {
 
     var style_folder = gui.addFolder('Style');
     style_folder.addColor(controls, "strokeColor");
-    style_folder.add(controls, "strokeWidth", 0, 50).step(.25);
-    style_folder.add(controls, "miterLimit", 0, 50).step(.25);
+    style_folder.add(controls, "strokeWidth", 0, 50).step(1);
+    style_folder.add(controls, "miterLimit", 0, 50).step(1);
     style_folder.add(controls, "strokeCap", ["round","square","butt"]);
     style_folder.add(controls, "strokeJoin", ["miter","round","bevel"]);
     style_folder.add(controls, "closed");
     var fill = style_folder.add(controls, "fill");
 
     var circle_folder = gui.addFolder("Circle");
-    circle_folder.add(controls, "centerX", 0, WIDTH);
-    circle_folder.add(controls, "centerY", 0, HEIGHT);
-    circle_folder.add(controls, "radius", 0, 200);
+    circle_folder.add(controls, "centerX", 0, WIDTH).step(1);
+    circle_folder.add(controls, "centerY", 0, HEIGHT).step(1);
+    circle_folder.add(controls, "radius", 0, 200).step(1);
     circle_folder.add(controls, "drawCircle");
 
     gui.add(controls, "undo");
     gui.add(controls, "redo");
+    gui.add(controls, "save");
 
     style_folder.open();
     circle_folder.open();
@@ -129,15 +160,17 @@ function removePath() {
     if(item) return item;
 }
 
-/*
-Path
--closed: boolean
--segments: array
--style: object
-    miterLimit: num
-    strokeCap: string
-    strokeColor.cssString: string
-    strokeJoin: string
-    strokeWidth: num
+function stringFreedrawn(p) {
+    var str, seg = p.segments;
+    console.log(seg)
+    str = ', "points": ['
 
-*/
+    for(var i = 0, l = seg.length; i < l; i++) {
+        var x = seg[i].point.x, y = seg[i].point.y;
+        str += '{"x":'+x+',"y":'+y+'},';
+    }
+    str = str.slice(0,-1);
+    str += '] ';
+
+    return str;
+}
