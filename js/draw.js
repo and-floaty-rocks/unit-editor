@@ -5,6 +5,8 @@ makeDatGUI();
 var text = new PointText(new Point(10,10));
 text.fillColor = "black";
 
+//function onMouseMove() { }
+
 function Controls() {
     //style
     this.strokeColor = "#ff0000";
@@ -14,6 +16,7 @@ function Controls() {
     this.miterLimit = 10;
     this.fillColor = "#ff0000";
     this.closed = false;
+    this.fill = false;
 
     //circle
     this.centerX = 100;
@@ -28,10 +31,13 @@ function Controls() {
         applyStyle(circle);
         addPath(circle);
     };
+
+
     this.undo = function() {
         if(paths.length > 0) {
             var item = removePath();
             item.remove();
+            view.draw();
         }
     };
     this.redo = function() {
@@ -39,6 +45,7 @@ function Controls() {
             var item = undos.pop();
             project.activeLayer.addChild(item);
             paths.push(item);
+            view.draw();
         }
     }
 }
@@ -53,16 +60,15 @@ function applyStyle(item) {
     if(item.type !== "circle") {
         item.closed = controls.closed;
     }
-}
 
-function onMouseMove(event) {
-    text.content = event.point.toString();
+    if(controls.fill && item.type === "circle") {
+        item.fillColor = controls.fillColor;
+    }
 }
 
 function makeDatGUI() {
     controls = new Controls();
     var gui = new dat.GUI();
-
 
     var style_folder = gui.addFolder('Style');
     style_folder.addColor(controls, "strokeColor");
@@ -71,6 +77,7 @@ function makeDatGUI() {
     style_folder.add(controls, "strokeCap", ["round","square","butt"]);
     style_folder.add(controls, "strokeJoin", ["miter","round","bevel"]);
     style_folder.add(controls, "closed");
+    var fill = style_folder.add(controls, "fill");
 
     var circle_folder = gui.addFolder("Circle");
     circle_folder.add(controls, "centerX", 0, WIDTH);
@@ -81,14 +88,20 @@ function makeDatGUI() {
     gui.add(controls, "undo");
     gui.add(controls, "redo");
 
-
     style_folder.open();
     circle_folder.open();
+
+    var fillColor;
+    fill.onChange(function(value) {
+        if(value) fillColor = style_folder.addColor(controls, "fillColor");
+        else style_folder.remove(fillColor);
+    });
 }
 
 function onMouseDown(event) {
     path = new Path();
     path.add(event.point);
+    path.type = "freedrawn"
     applyStyle(path);
 
     addPath(path);
@@ -102,12 +115,10 @@ function onMouseDrag(event) {
 function onMouseUp(event) {
     //path.simplify(10);
    // path.selected = true;
-   // console.log(path)
-   // console.log(path.style)
-
 }
 
 function addPath(item) {
+    view.draw();
     paths.push(item);
     undos = [];
 }
