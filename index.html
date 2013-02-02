@@ -1,9 +1,26 @@
-<doctype html>
+<!doctype html>
 <html>
 <head>
+	<script src="js/paper.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	<script type="text/paperscript" src="js/draw.js" canvas="draw"></script>
+	<script src="js/dat.gui.min.js"></script>
+
 	<title>Lets edit stuff!</title>
+
+	<style>
+	body { overflow: hidden; }
+  	.draw {
+	    position: absolute;
+	    border: solid 2px #000;
+	    left: 50%;
+	    top: 50%; 
+	    margin-left: -400px;
+	    margin-top: -250px;
+	}
+	</style>
 </head>
 <body>
-
+	<canvas id="draw" resize></canvas>
 </body>
-</html
+</html>
