@@ -29,9 +29,6 @@ function Controls() {
         circle.type = "circle";
         applyStyle(circle);
         addPath(circle);
-
-        console.log(circle)
-        console.log(circle.getLength());
     };
 
 
@@ -51,11 +48,13 @@ function Controls() {
         }
     };
     this.save = function() {
-        var string = '{ "amount": ' + paths.length + ', "paths": [';
+        if(paths.length < 1) return;
+
+        string = '{ "amount": ' + paths.length + ', "paths": [';
 
         for(var i = 0, l = paths.length; i < l; i++) {
             var p = paths[i];
-            console.log(p);
+            //console.log(p);
             string += '{'+
             ' "type": "'+p.type+'", '+                         //string
             '"closed": '+p.closed+', '+                       //boolean
@@ -67,7 +66,7 @@ function Controls() {
             //end of generic
 
             switch(p.type) {
-                case "freedrawn": string += stringFreedrawn(p); break;
+                case "freedrawn": string += stringPoints(p); break;
             }
 
             string += '}, ';
@@ -75,8 +74,11 @@ function Controls() {
 
         string = string.slice(0,-2); //remove end comma
         string += '] }';
-        console.log(string);
+       // console.log(string);
         var kek = JSON.parse(string);
+
+        replacePopup(string, true);
+        jQuery("#frog").trigger(jQuery.Event("click"));
     };
 }
 //{"amount": 1, "paths": [{"type": "freedrawn", "closed": false, "miterLimit": 10, "strokeWidth": 17, "strokeCap": "round", "strokeJoin": "round", "strokeColor": "{ red: 1, green: 0, blue: 0, alpha: 1 }"}] }
@@ -87,7 +89,7 @@ function applyStyle(item) {
     item.miterLimit = controls.miterLimit;
     item.strokeJoin = controls.strokeJoin;
     
-    if(item.type !== "circle") {
+    if(item.type === "freedrawn") {
         item.closed = controls.closed;
     }
 
@@ -117,7 +119,8 @@ function makeDatGUI() {
 
     gui.add(controls, "undo");
     gui.add(controls, "redo");
-    gui.add(controls, "save");
+    var save = gui.add(controls, "save");
+    $(save.domElement).attr('id', 'frog');
 
     style_folder.open();
     circle_folder.open();
@@ -160,9 +163,9 @@ function removePath() {
     if(item) return item;
 }
 
-function stringFreedrawn(p) {
+function stringPoints(p) {
     var str, seg = p.segments;
-    console.log(seg)
+    //console.log(seg)
     str = ', "points": ['
 
     for(var i = 0, l = seg.length; i < l; i++) {
@@ -173,4 +176,23 @@ function stringFreedrawn(p) {
     str += '] ';
 
     return str;
+}
+
+var pop = $('#frog')
+pop.avgrund({
+    height: 200,
+    holderClass: 'custom',
+    template: '<textarea rows="9" cols="44">dat json</textarea>'
+});
+
+function replacePopup(string, save) {
+    var replace;
+    if(save) {
+        replace = '<textarea rows="12" cols="44">'+string+'</textarea>'
+    }
+    else { 
+        replace = '<textarea rows="9" cols="44">'+string+'</textarea>'+
+        '<div><a href="http://github.com/voronianski/jquery.avgrund.js" target="_blank" class="clicky">Avgrund on Github</a></div>'
+    }
+    $(".custom").html(replace);
 }
