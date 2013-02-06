@@ -62,11 +62,11 @@ function Controls() {
             '"strokeWidth": '+p.strokeWidth+', '+             //number
             '"strokeCap": "'+p.strokeCap+'", '+               //string
             '"strokeJoin": "'+p.strokeJoin+'", '+             //string
-            '"strokeColor": "'+p.strokeColor+'"';             //bad string
+            '"strokeColor": {"red":'+p.strokeColor.red+',"green":'+p.strokeColor.green+',"blue":'+p.strokeColor.blue+',"alpha":'+p.strokeColor.alpha+'}';
             //end of generic
 
             switch(p.type) {
-                case "freedrawn": string += stringPoints(p); break;
+                case "line": string += stringPoints(p); break;
             }
 
             string += '}, ';
@@ -85,15 +85,15 @@ function Controls() {
         jQuery("#frog").trigger(jQuery.Event("click"));
     };
 }
-//{"amount": 1, "paths": [{"type": "freedrawn", "closed": false, "miterLimit": 10, "strokeWidth": 17, "strokeCap": "round", "strokeJoin": "round", "strokeColor": "{ red: 1, green: 0, blue: 0, alpha: 1 }"}] }
+
 function applyStyle(item, item2) {
     item.strokeWidth = item2.strokeWidth;
-    //item.strokeColor = item2.strokeColor;
+    item.strokeColor = item2.strokeColor;
     item.strokeCap = item2.strokeCap;
     item.miterLimit = item2.miterLimit;
     item.strokeJoin = item2.strokeJoin;
     
-    if(item.type === "freedrawn") {
+    if(item.type === "line") {
         item.closed = item2.closed;
     }
 
@@ -145,7 +145,7 @@ function makeDatGUI() {
 function onMouseDown(event) {
     if(Key.isDown("control")) {
         path = new Path();
-        path.type = "freedrawn";
+        path.type = "line";
         applyStyle(path, controls);
 
         addPath(path);
@@ -157,10 +157,10 @@ function onMouseDown(event) {
     else {
         path = new Path();
         path.add(event.point);
-        path.type = "freedrawn";
-        applyStyle(path);
+        path.type = "line";
+        applyStyle(path, controls);
 
-        addPath(path, controls);
+        addPath(path);
     }
 }
 
@@ -169,8 +169,6 @@ function onMouseDrag(event) {
 }
 
 function onMouseUp(event) {
-    //path.simplify(10);
-   // path.selected = true;
     if(controls.simplify) path.simplify(controls.simplifyNum);
 }
 
@@ -211,7 +209,7 @@ function loadJSON() {
         console.log(item);
 
         switch(item.type) {
-            case "freedrawn": drawLine(item); break;
+            case "line": drawLine(item); break;
         }
     }
 }
@@ -219,22 +217,26 @@ function loadJSON() {
 function drawLine(item) {
     path = new Path();
     path.type = item.type;
+
+    item.strokeColor = findRGBA(item);
+
     applyStyle(path, item);
 
     for(var i=0, l=item.points.length; i<l; i++) {
         path.add(item.points[i]);
     }
     console.log(path)
-    path.strokeColor = "black"
     view.draw();
 }
 
-var pop = $('#frog')
-pop.avgrund({
-    height: 200,
-    holderClass: 'custom',
-    template: '<textarea rows="9" cols="44">dat json</textarea>'
-});
+function findRGBA(item) {
+    var r = item.strokeColor.red,
+        g = item.strokeColor.green,
+        b = item.strokeColor.blue,
+        a = item.strokeColor.alpha;
+
+    return (new RgbColor(r,g,b,a))
+}
 
 function replacePopup(save, string) {
     var replace;
@@ -242,10 +244,19 @@ function replacePopup(save, string) {
         replace = '<textarea rows="12" cols="44">'+string+'</textarea>'
     }
     else { 
-        replace = '<textarea rows="9" cols="44">'+"ducks go quack"+'</textarea>'+
+        replace = '<textarea rows="9" cols="44"></textarea>'+
         '<div class="clicky">Load JSON</div>'
     }
     $(".custom").html(replace);
 }
 
+$(".clicky").live("click", loadJSON);
 $(".custom").delegate("div", "click", loadJSON);
+$('#frog').avgrund({
+    height: 200,
+    holderClass: 'custom',
+    template: '<textarea rows="9" cols="44">dat json</textarea>'
+});
+
+
+
